@@ -1,0 +1,43 @@
+{
+  "name": "mov-compress-app",
+  "version": "1.0.0",
+  "description": "拖放 MOV 文件压缩为 MP4",
+  "main": "main.js",
+  "scripts": {
+    "start": "env -u ELECTRON_RUN_AS_NODE electron .",
+    "build": "electron-builder --mac",
+    "build:dmg": "electron-builder --mac -c.mac.target=dmg",
+    "build:intel": "electron-builder --mac --x64"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "sharp": "^0.33.0",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.movcompress.app",
+    "productName": "MOV 压缩",
+    "asarUnpack": [
+      "extract_frame_helper",
+      "extract_frame_helper_x64",
+      "node_modules/sharp/**",
+      "node_modules/@img/**",
+      "node_modules/ffmpeg-static/**",
+      "node_modules/ffprobe-static/**"
+    ],
+    "extraResources": [
+      "extract_frame_helper",
+      "extract_frame_helper_x64"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "zip"
+    }
+  }
+}

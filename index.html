@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>MOV 压缩为 MP4</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="titlebar">
+      <span class="title">MOV 压缩为 MP4</span>
+    </header>
+
+    <main class="content">
+      <div class="content-inner">
+      <div id="dropZone" class="drop-zone">
+        <div class="drop-inner">
+          <div class="drop-icon">📁</div>
+          <p class="drop-text" id="dropText">将 MOV 或 MP4 文件拖放到此处</p>
+          <p class="drop-hint" id="dropHint">或点击选择文件</p>
+        </div>
+      </div>
+
+      <p class="drop-zone-note">提示：拖入 MP4 时仅导出首帧，不进行压缩。</p>
+
+      <div id="fileInfo" class="file-info hidden">
+        <span class="file-name" id="fileName"></span>
+        <button type="button" class="btn-clear" id="btnClear" title="清除">×</button>
+      </div>
+
+      <div id="optionsPanel" class="options-panel hidden">
+        <div id="compressOnlyBlock">
+        <div class="option-row">
+          <label class="option-label">编码</label>
+          <div class="option-control option-group">
+            <label class="radio-label"><input type="radio" name="codec" value="h264" /> H.264</label>
+            <label class="radio-label"><input type="radio" name="codec" value="h265" checked /> H.265</label>
+          </div>
+        </div>
+        <div class="option-row">
+          <label class="option-label">分辨率</label>
+          <select id="resolution" class="option-select">
+            <option value="original">原始</option>
+            <option value="3840:2160">3840×2160</option>
+            <option value="2560:1600">2560×1600</option>
+            <option value="1920:1080">1920×1080</option>
+            <option value="1280:720">1280×720</option>
+            <option value="custom">自定义…</option>
+          </select>
+        </div>
+        <div class="option-row custom-res-row hidden" id="customResolutionRow">
+          <label class="option-label"></label>
+          <div class="option-group">
+            <label class="checkbox-label">
+              <span>宽</span>
+              <input type="number" id="customWidth" class="custom-res-input" min="16" max="16384" />
+            </label>
+            <label class="checkbox-label">
+              <span>高</span>
+              <input type="number" id="customHeight" class="custom-res-input" min="16" max="16384" />
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="customKeepAspect" checked />
+              <span>保持原始比例（建议只填一边）</span>
+            </label>
+          </div>
+        </div>
+        <div class="option-row">
+          <label class="option-label">帧率</label>
+          <select id="fps" class="option-select">
+            <option value="original">原始</option>
+            <option value="60">60 fps</option>
+            <option value="30">30 fps</option>
+            <option value="24">24 fps</option>
+          </select>
+        </div>
+        <p id="sourceVideoInfo" class="source-video-info hidden"></p>
+        <div class="option-row">
+          <label class="option-label">序列帧</label>
+          <div class="option-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="sequenceOptimized" />
+              <span>启用序列帧封装 MOV 优化（如 ProRes/PNG 动画）</span>
+            </label>
+          </div>
+        </div>
+        <p id="sequenceHint" class="sequence-hint hidden"></p>
+        <div class="option-row sequence-crf-row">
+          <label class="option-label"></label>
+          <div class="option-group">
+            <label class="checkbox-label sequence-crf-wrap">
+              <span>CRF</span>
+              <input type="number" id="sequenceCrf" class="sequence-crf-input" min="18" max="30" value="23" />
+              <span class="sequence-crf-note">数值越大体积越小，建议 21–25</span>
+            </label>
+          </div>
+        </div>
+        <div class="option-row">
+          <label class="option-label">音频</label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="mute" />
+            <span>静音</span>
+          </label>
+        </div>
+        </div>
+        <div class="option-row" id="extractCoverRow">
+          <label class="option-label">封面</label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="extractCover" checked />
+            <span>提取首帧为封面图</span>
+          </label>
+        </div>
+        <div class="option-row">
+          <label class="option-label">封面格式</label>
+          <select id="coverFormat" class="option-select">
+            <option value="jpg">JPG（≤2MB，体积小）</option>
+            <option value="jpg_unlimited">JPG（极高质量，不限制体积）</option>
+            <option value="png">PNG（无损，原分辨率；若超 2MB 则自动存为无损 WebP）</option>
+            <option value="png_only">无损 PNG（仅 PNG，原分辨率，体积可能较大）</option>
+          </select>
+        </div>
+        <div class="option-row" id="reduceMoireRow">
+          <label class="option-label"></label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="reduceMoire" />
+            <span>减轻摩尔纹（对封面做轻微柔化，适合大面积渐变/发光场景；勾选后导出 JPG 的体积可能增加至最多约 4MB）</span>
+          </label>
+        </div>
+        <p class="option-hint" id="coverHint">封面从输出视频的首帧截取，与播放时颜色一致，保存至同目录。</p>
+      </div>
+
+      <div class="progress-wrap hidden" id="progressWrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-text" id="progressText">准备中…</p>
+        <p class="progress-eta" id="progressEta"></p>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="btnStart" disabled>开始</button>
+      </div>
+
+      <div id="message" class="message hidden"></div>
+      <div class="footer-links">
+        <a href="#" id="openLogLink">打开日志</a>
+      </div>
+      </div>
+    </main>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

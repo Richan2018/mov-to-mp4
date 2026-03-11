@@ -1,0 +1,11 @@
+# 构建产物（超过 GitHub 100MB 限制，不要提交）
+dist/
+
+# 依赖
+node_modules/
+
+# 系统与编辑器
+.DS_Store
+*.log
+.env
+.env.local
